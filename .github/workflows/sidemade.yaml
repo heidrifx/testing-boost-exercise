@@ -1,0 +1,47 @@
+name: SIDEMADE CI/CD
+
+on: [push]
+
+jobs:
+  style_check:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+      - name: Run style check
+        run: clang-format -i src/*.cpp src/*.hpp tests/*.cpp --dry-run -Werror
+
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install build-essential cmake libeigen3-dev libyaml-cpp-dev -y
+      - name: Prepare build
+        run: mkdir build && cd build
+      - name: CMake configure
+        run: cmake ..
+      - name: Build
+        run: make -j4
+
+  tests:
+    runs-on: ubuntu-24.04
+
+    steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Install dependencies
+          run: sudo apt-get update && sudo apt-get install build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev -y
+        - name: Prepare build
+          run: mkdir build && cd build
+        - name: CMake configure
+          run: cmake ..
+        - name: Build
+          run: make -j4
+        - name: Run tests
+          run: make test
