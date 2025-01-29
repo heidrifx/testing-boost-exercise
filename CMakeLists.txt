@@ -32,3 +32,4 @@ target_link_libraries(testsidemade PRIVATE Boost::unit_test_framework Eigen3::Ei
 
 add_test(NAME "MatrixSolverTests" COMMAND ${CMAKE_CURRENT_BINARY_DIR}/testsidemade --run_test=MatrixSolverTests/*)
 add_test(NAME "ConfigurationTests" COMMAND ${CMAKE_CURRENT_BINARY_DIR}/testsidemade --run_test=ConfigurationTests/* WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
+add_test(NAME "MatrixIOTests" COMMAND ${CMAKE_CURRENT_BINARY_DIR}/testsidemade --run_test=MatrixIOTests/* WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
