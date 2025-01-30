@@ -14,7 +14,7 @@ jobs:
         uses: awalsh128/cache-apt-pkgs-action@latest 
         with:
           packages: clang-format
-          version: style-check
+          version: ${{ github.repository }}-style_check
           
       - name: Run style check
 
@@ -36,7 +36,7 @@ jobs:
         uses: awalsh128/cache-apt-pkgs-action@latest 
         with:
           packages: clang build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev
-          version: ${{ matrix.mode }}-${{ matrix.compiler }}
+          version: ${{ github.repository }}-${{ matrix.mode }}-${{ matrix.compiler }}
 
       - name: Build
         run: 
@@ -73,7 +73,7 @@ jobs:
         uses: awalsh128/cache-apt-pkgs-action@latest 
         with:
           packages: clang build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev
-          version: ${{ matrix.mode }}-${{ matrix.compiler }}
+          version: ${{ github.repository }}-${{ matrix.mode }}-${{ matrix.compiler }}
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
