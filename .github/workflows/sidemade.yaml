@@ -19,8 +19,41 @@ jobs:
 
         run: clang-format -i src/*.cpp src/*.hpp tests/*.cpp --dry-run -Werror
 
+  deps:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Set up cache key
+        id: cache-key
+        run: echo "CACHE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: Restore cached apt packages
+        id: cache-apt-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: /var/cache/apt/archives/*.deb
+          key: ${{ runner.os }}-apt-${{ env.CACHE_DATE }}
+
+      - name: Update and install packages
+        run: |
+          sudo apt-get update &&
+          sudo apt-get install -y --no-install-recommends cmake g++ clang libeigen3-dev libboost-all-dev libyaml-cpp-dev
+
+      - name: Cache apt packages
+        id: cache-apt-save
+        if: always() && steps.cache-apt-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /var/cache/apt/archives/*.deb
+          key: ${{ runner.os }}-apt-${{ env.CACHE_DATE }}
+
+      - name: Clean apt
+        run: sudo apt-get clean
+
   build:
     runs-on: ubuntu-24.04
+
+    needs: deps
 
     strategy:
       matrix:
@@ -63,14 +96,6 @@ jobs:
           path: build/*
           retention-days: 1
           if-no-files-found: error
-
-      - name: Cache apt packages
-        id: cache-apt-save
-        if: always() && steps.cache-apt-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: /var/cache/apt/archives/*.deb
-          key: ${{ runner.os }}-apt-${{ env.CACHE_DATE }}
 
   tests:
     runs-on: ubuntu-24.04
