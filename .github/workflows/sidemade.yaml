@@ -45,8 +45,7 @@ jobs:
       - name: Update and install packages
         run: |
           sudo apt-get update &&
-          sudo apt-get install -y --no-install-recommends cmake g++ clang libeigen3-dev libboost-all-dev libyaml-cpp-dev &&
-          sudo apt-get clean
+          sudo apt-get install -y --no-install-recommends cmake g++ clang libeigen3-dev libboost-all-dev libyaml-cpp-dev
 
       - name: Build
         run: 
