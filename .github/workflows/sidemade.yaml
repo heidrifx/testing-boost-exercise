@@ -9,9 +9,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y clang-format
+        uses: awalsh128/cache-apt-pkgs-action@latest 
+        with:
+          packages: clang-format
+          version: style-check
+          
       - name: Run style check
+
         run: clang-format -i src/*.cpp src/*.hpp tests/*.cpp --dry-run -Werror
 
   build:
