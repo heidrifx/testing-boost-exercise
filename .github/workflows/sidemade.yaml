@@ -36,9 +36,10 @@ jobs:
         run: echo "CACHE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
       - name: Restore cached apt packages
+        id: cache-apt-restore
         uses: actions/cache/restore@v4
         with:
-          path: /var/cache/apt/archives/*
+          path: /var/cache/apt/archives/*.deb
           key: ${{ runner.os }}-apt-${{ env.CACHE_DATE }}
 
       - name: Update and install packages
@@ -65,9 +66,11 @@ jobs:
           if-no-files-found: error
 
       - name: Cache apt packages
+        id: cache-apt-save
+        if: always() && steps.cache-apt-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: /var/cache/apt/archives/*
+          path: /var/cache/apt/archives/*.deb
           key: ${{ runner.os }}-apt-${{ env.CACHE_DATE }}
 
   tests:
@@ -84,10 +87,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up cache key
+        id: cache-key
+        run: echo "CACHE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
       - name: Restore cached apt packages
         uses: actions/cache/restore@v4
         with:
-          path: /var/cache/apt/archives/*
+          path: /var/cache/apt/archives/*.deb
           key: ${{ runner.os }}-apt-${{ env.CACHE_DATE }}
 
       - name: Update and install packages
