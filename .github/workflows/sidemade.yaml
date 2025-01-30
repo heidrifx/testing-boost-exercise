@@ -82,4 +82,7 @@ jobs:
           path: build/
 
       - name: Run tests
-        run: cd build && ctest -j4
+        run: |
+          cd build && 
+          chmod +x testsidemade sidemade &&
+          ctest -j4
