@@ -1,0 +1,114 @@
+name: SIDEMADE CI/CD
+
+on: [push]
+
+env:
+  STYLE_CHECK_PACKAGES: clang-format
+  BUILD_PACKAGES: cmake g++ clang libeigen3-dev libboost-all-dev libyaml-cpp-dev
+
+jobs:
+  deps:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Install style check dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ${{ env.STYLE_CHECK_PACKAGES }}
+          version: ${{ runner.os }}-style_check-cache
+
+      - name: Install build dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ${{ env.BUILD_PACKAGES }}
+          version: ${{ runner.os }}-build-cache
+
+  style_check:
+    runs-on: ubuntu-24.04
+
+    needs: deps
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install style check dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ${{ env.STYLE_CHECK_PACKAGES }}
+          version: ${{ runner.os }}-style_check-cache
+          
+      - name: Run style check
+        run: clang-format -i src/*.cpp src/*.hpp tests/*.cpp --dry-run -Werror
+
+  build:
+    runs-on: ubuntu-24.04
+
+    needs: deps
+
+    strategy:
+      matrix:
+        mode: [Release, Debug]
+        compiler: [gcc, clang]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ${{ env.BUILD_PACKAGES }}
+          version: ${{ runner.os }}-build-cache
+
+      - name: Force reinstall Boost Test
+        run: sudo apt-get install --no-install-recommends -y libboost-test-dev
+
+      - name: Build
+        run: 
+          mkdir build && 
+          cd build && 
+          cmake -DCMAKE_C_COMPILER=${{ matrix.compiler }} 
+                -DCMAKE_CXX_COMPILER=$(if [ "${{ matrix.compiler }}" == "gcc" ]; then echo "g++"; else echo "clang++"; fi) 
+                -DCMAKE_BUILD_TYPE=${{ matrix.mode }} .. && 
+          make -j4
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.mode }}-${{ matrix.compiler }}
+          path: build/*
+          retention-days: 1
+          if-no-files-found: error
+
+  tests:
+    runs-on: ubuntu-24.04
+
+    strategy:
+      matrix:
+        mode: [Release, Debug]
+        compiler: [gcc, clang]
+
+    needs: [deps, build]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ${{ env.BUILD_PACKAGES }}
+          version: ${{ runner.os }}-build-cache
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ matrix.mode }}-${{ matrix.compiler }}
+          path: build/
+
+      - name: Run tests
+        run: |
+          cd build && 
+          chmod +x testsidemade sidemade &&
+          ctest -j4
