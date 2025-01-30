@@ -3,35 +3,50 @@ name: SIDEMADE CI/CD
 on: [push]
 
 env:
-  PACKAGES: cmake g++ clang libeigen3-dev libboost-all-dev libyaml-cpp-dev
+  STYLE_CHECK_PACKAGES: clang-format
+  BUILD_PACKAGES: cmake g++ clang libeigen3-dev libboost-all-dev libyaml-cpp-dev
+  TEST_PACKAGES: cmake
 
 jobs:
+  deps:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Install style check dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ${{ env.STYLE_CHECK_PACKAGES }}
+          version: ${{ runner.os }}-style_check-cache
+
+      - name: Install build dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ${{ env.BUILD_PACKAGES }}
+          version: ${{ runner.os }}-build-cache
+          
+      - name: Install test dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ${{ env.TEST_PACKAGES }}
+          version: ${{ runner.os }}-test-cache
+
   style_check:
     runs-on: ubuntu-24.04
+
+    needs: deps
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update &&
-          sudo apt-get install -y --no-install-recommends clang-format
-          
-      - name: Run style check
-
-        run: clang-format -i src/*.cpp src/*.hpp tests/*.cpp --dry-run -Werror
-
-  deps:
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Install dependencies
+      - name: Install style check dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: ${{ env.PACKAGES }}
-          version: ${{ runner.os }}-build-cache
-          execute_install_scripts: true
+          packages: ${{ env.STYLE_CHECK_PACKAGES }}
+          version: ${{ runner.os }}-style_check-cache
+          
+      - name: Run style check
+        run: clang-format -i src/*.cpp src/*.hpp tests/*.cpp --dry-run -Werror
 
   build:
     runs-on: ubuntu-24.04
@@ -50,12 +65,11 @@ jobs:
       - name: Install dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: ${{ env.PACKAGES }}
+          packages: ${{ env.BUILD_PACKAGES }}
           version: ${{ runner.os }}-build-cache
-          execute_install_scripts: true
 
-      - name: Force reinstall Boost
-        run: sudo apt-get install --no-install-recommends -y libboost-all-dev
+      - name: Force reinstall Boost Test
+        run: sudo apt-get install --no-install-recommends -y libboost-test-dev
 
       - name: Build
         run: 
@@ -91,9 +105,8 @@ jobs:
       - name: Install dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: ${{ env.PACKAGES }}
-          version: ${{ runner.os }}-build-cache
-          execute_install_scripts: true
+          packages: ${{ env.TEST_PACKAGES }}
+          version: ${{ runner.os }}-test-cache
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
