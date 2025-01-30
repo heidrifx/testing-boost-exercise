@@ -35,14 +35,33 @@ jobs:
                 -DCMAKE_CXX_COMPILER=$(if [ "${{ matrix.compiler }}" == "gcc" ]; then echo "g++"; else echo "clang++"; fi) 
                 -DCMAKE_BUILD_TYPE=${{ matrix.mode }} .. && 
           make -j4
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.mode }}-${{ matrix.compiler }}
+          path: build/
+          retention-days: 1
+          if-no-files-found: error
 
   tests:
     runs-on: ubuntu-24.04
 
+    strategy:
+      matrix:
+        mode: [Release, Debug]
+        compiler: [gcc, clang]
+
+    needs: build
+
     steps:
         - name: Checkout code
           uses: actions/checkout@v4
-        - name: Install dependencies
-          run: sudo apt-get update && sudo apt-get install -y build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev
-        - name: Build and run tests
-          run: mkdir build && cd build && cmake .. && make -j4 && ctest -j4
+        - name: Install CMake for CTest to work
+          run: sudo apt-get update && sudo apt-get install -y cmake
+        - name: Download build artifacts
+          uses: actions/download-artifact@v4
+          with:
+            name: build-${{ matrix.mode }}-${{ matrix.compiler }}
+            path: build/
+        - name: Run tests
+          run: cd build && ctest -j4
