@@ -2,6 +2,9 @@ name: SIDEMADE CI/CD
 
 on: [push]
 
+env:
+  PACKAGES: cmake g++ clang libeigen3-dev libboost-all-dev libyaml-cpp-dev
+
 jobs:
   style_check:
     runs-on: ubuntu-24.04
@@ -23,32 +26,12 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Set up cache key
-        id: cache-key
-        run: echo "CACHE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-
-      - name: Restore cached apt packages
-        id: cache-apt-restore
-        uses: actions/cache/restore@v4
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          path: /var/cache/apt/archives/*.deb
-          key: ${{ runner.os }}-apt-${{ env.CACHE_DATE }}
-
-      - name: Update and install packages
-        run: |
-          sudo apt-get update &&
-          sudo apt-get install -y --no-install-recommends cmake g++ clang libeigen3-dev libboost-all-dev libyaml-cpp-dev
-
-      - name: Cache apt packages
-        id: cache-apt-save
-        if: always() && steps.cache-apt-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: /var/cache/apt/archives/*.deb
-          key: ${{ runner.os }}-apt-${{ env.CACHE_DATE }}
-
-      - name: Clean apt
-        run: sudo apt-get clean
+          packages: ${{ env.PACKAGES }}
+          version: ${{ github.repository }}-${{ runner.os }}-apt-cache
+          execute_install_scripts: true
 
   build:
     runs-on: ubuntu-24.04
@@ -64,21 +47,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up cache key
-        id: cache-key
-        run: echo "CACHE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-
-      - name: Restore cached apt packages
-        id: cache-apt-restore
-        uses: actions/cache/restore@v4
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          path: /var/cache/apt/archives/*.deb
-          key: ${{ runner.os }}-apt-${{ env.CACHE_DATE }}
-
-      - name: Update and install packages
-        run: |
-          sudo apt-get update &&
-          sudo apt-get install -y --no-install-recommends cmake g++ clang libeigen3-dev libboost-all-dev libyaml-cpp-dev
+          packages: ${{ env.PACKAGES }}
+          version: ${{ github.repository }}-${{ runner.os }}-apt-
+          execute_install_scripts: true
 
       - name: Build
         run: 
@@ -111,21 +85,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up cache key
-        id: cache-key
-        run: echo "CACHE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-
-      - name: Restore cached apt packages
-        uses: actions/cache/restore@v4
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          path: /var/cache/apt/archives/*.deb
-          key: ${{ runner.os }}-apt-${{ env.CACHE_DATE }}
-
-      - name: Update and install packages
-        run: |
-          sudo apt-get update &&
-          sudo apt-get install -y --no-install-recommends cmake g++ clang libeigen3-dev libboost-all-dev libyaml-cpp-dev &&
-          sudo apt-get clean
+          packages: ${{ env.PACKAGES }}
+          version: ${{ github.repository }}-${{ runner.os }}-apt-cache
+          execute_install_scripts: true
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
