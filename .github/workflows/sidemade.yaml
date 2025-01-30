@@ -30,7 +30,7 @@ jobs:
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: ${{ env.PACKAGES }}
-          version: ${{ github.repository }}-${{ runner.os }}-apt-cache
+          version: ${{ runner.os }}-build-cache
           execute_install_scripts: true
 
   build:
@@ -51,7 +51,7 @@ jobs:
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: ${{ env.PACKAGES }}
-          version: ${{ github.repository }}-${{ runner.os }}-apt-
+          version: ${{ runner.os }}-build-cache
           execute_install_scripts: true
 
       - name: Build
@@ -79,7 +79,7 @@ jobs:
         mode: [Release, Debug]
         compiler: [gcc, clang]
 
-    needs: build
+    needs: [deps, build]
 
     steps:
       - name: Checkout code
@@ -89,7 +89,7 @@ jobs:
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: ${{ env.PACKAGES }}
-          version: ${{ github.repository }}-${{ runner.os }}-apt-cache
+          version: ${{ runner.os }}-build-cache
           execute_install_scripts: true
 
       - name: Download build artifacts
