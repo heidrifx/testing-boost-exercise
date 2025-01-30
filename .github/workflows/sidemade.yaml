@@ -26,26 +26,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: ubuntu-24.04-apt-${{ runner.os }}-${{ hashFiles('.github/workflows/**') }}
-          restore-keys: |
-            ubuntu-24.04-apt-${{ runner.os }}-
-
       - name: Install dependencies
-        run: |
-          sudo apt-get update 
-          sudo apt-get install -y --no-install-recommends clang build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev
+        uses: awalsh128/cache-apt-pkgs-action@latest 
+        with:
+          packages: clang build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev
+          version: ${{ matrix.mode }}-${{ matrix.compiler }}
 
       - name: Build
         run: 
           mkdir build && 
-          cd build &&
-          cmake -DCMAKE_C_COMPILER=${{ matrix.compiler }}
-                -DCMAKE_CXX_COMPILER=$(if [ "${{ matrix.compiler }}" == "gcc" ]; then echo "g++"; else echo "clang++"; fi)
-                -DCMAKE_BUILD_TYPE=${{ matrix.mode }} .. &&
+          cd build && 
+          cmake -DCMAKE_C_COMPILER=${{ matrix.compiler }} 
+                -DCMAKE_CXX_COMPILER=$(if [ "${{ matrix.compiler }}" == "gcc" ]; then echo "g++"; else echo "clang++"; fi) 
+                -DCMAKE_BUILD_TYPE=${{ matrix.mode }} .. && 
           make -j4
 
       - name: Upload build artifacts
@@ -67,28 +60,20 @@ jobs:
     needs: build
 
     steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        - name: Cache apt packages
-          id: cache-apt
-          uses: actions/cache@v4
-          with:
-            path: /var/cache/apt/archives
-            key: ubuntu-24.04-apt-${{ runner.os }}-${{ hashFiles('.github/workflows/**') }}
-            restore-keys: |
-              ubuntu-24.04-apt-${{ runner.os }}-
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest 
+        with:
+          packages: clang build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev
+          version: ${{ matrix.mode }}-${{ matrix.compiler }}
 
-        - name: Install dependencies
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y --no-install-recommends clang build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ matrix.mode }}-${{ matrix.compiler }}
+          path: build/
 
-        - name: Download build artifacts
-          uses: actions/download-artifact@v4
-          with:
-            name: build-${{ matrix.mode }}-${{ matrix.compiler }}
-            path: build/
-
-        - name: Run tests
-          run: cd build && ctest -j4
+      - name: Run tests
+        run: cd build && ctest -j4
