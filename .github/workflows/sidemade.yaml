@@ -54,6 +54,9 @@ jobs:
           version: ${{ runner.os }}-build-cache
           execute_install_scripts: true
 
+      - name: Force reinstall Boost
+        run: sudo apt-get install --no-install-recommends -y libboost-all-dev
+
       - name: Build
         run: 
           mkdir build && 
