@@ -10,7 +10,21 @@ find_package(yaml-cpp 0.6.0 REQUIRED)
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS src/*.cpp)
 list(REMOVE_ITEM SRC_FILES "${PROJECT_SOURCE_DIR}/src/main.cpp")
 
+set(CMAKE_CXX_STANDARD 11)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 add_executable("${PROJECT_NAME}" "${SRC_FILES}" src/main.cpp)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  message(STATUS "Using GCC")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  message(STATUS "Using Clang")
+endif()
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 

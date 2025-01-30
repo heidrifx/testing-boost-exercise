@@ -17,13 +17,24 @@ jobs:
   build:
     runs-on: ubuntu-24.04
 
+    strategy:
+      matrix:
+        mode: [Release, Debug]
+        compiler: [gcc, clang]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev
+        run: sudo apt-get update && sudo apt-get install -y clang build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev
       - name: Build
-        run: mkdir build && cd build && cmake .. && make -j4
+        run: 
+          mkdir build && 
+          cd build && 
+          cmake -DCMAKE_C_COMPILER=${{ matrix.compiler }} 
+                -DCMAKE_CXX_COMPILER=$(if [ "${{ matrix.compiler }}" == "gcc" ]; then echo "g++"; else echo "clang++"; fi) 
+                -DCMAKE_BUILD_TYPE=${{ matrix.mode }} .. && 
+          make -j4
 
   tests:
     runs-on: ubuntu-24.04
@@ -34,4 +45,4 @@ jobs:
         - name: Install dependencies
           run: sudo apt-get update && sudo apt-get install -y build-essential cmake libeigen3-dev libboost-all-dev libyaml-cpp-dev
         - name: Build and run tests
-          run: mkdir build && cd build && cmake .. && make -j4 && make test
+          run: mkdir build && cd build && cmake .. && make -j4 && ctest -j4
