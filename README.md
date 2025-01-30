@@ -1,3 +1,5 @@
+[![SIDEMADE CI/CD](https://github.com/heidrifx/testing-boost-exercise/actions/workflows/sidemade.yaml/badge.svg)](https://github.com/heidrifx/testing-boost-exercise/actions/workflows/sidemade.yaml)
+
 # SIDEMADE - Simple Dense Matrix Decomposition
 
 A simple demo code to read dense matrices from files and solve linear systems with them.
